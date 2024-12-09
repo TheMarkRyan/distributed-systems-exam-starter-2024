@@ -6,12 +6,14 @@ import {
   QueryCommandInput,
 } from "@aws-sdk/lib-dynamodb";
 
+
 const ddbClient = new DynamoDBClient({ region: process.env.REGION });
 const ddbDocClient = DynamoDBDocumentClient.from(ddbClient);
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   try {
     const { awardBody, movieId } = event.pathParameters || {};
+    const minAwards = parseInt(event.queryStringParameters?.min || "0");
 
     if (!awardBody || !movieId) {
       return {
@@ -34,18 +36,23 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     const commandOutput = await ddbDocClient.send(new QueryCommand(commandInput));
     const awards = commandOutput.Items || [];
 
-    if (awards.length === 0) {
+    // Filter awards based on the minimum number of awards
+    const filteredAwards = awards.filter(
+      (award: any) => award.numAwards > minAwards
+    );
+
+    if (filteredAwards.length === 0) {
       return {
-        statusCode: 404,
+        statusCode: 400,
         body: JSON.stringify({
-          message: `No awards found for movieId ${movieId} and awardBody ${awardBody}.`,
+          message: `Request failed: No awards found with more than ${minAwards} awards for movieId ${movieId} and awardBody ${awardBody}.`,
         }),
       };
     }
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ data: awards }),
+      body: JSON.stringify({ data: filteredAwards }),
     };
   } catch (error: any) {
     console.error("Error: ", error);
@@ -55,3 +62,4 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     };
   }
 };
+
