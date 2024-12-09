@@ -8,6 +8,7 @@ import {
   GetCommand,
 } from "@aws-sdk/lib-dynamodb";
 import Ajv from "ajv";
+
 import schema from "../shared/types.schema.json";
 
 type ResponseBody = {

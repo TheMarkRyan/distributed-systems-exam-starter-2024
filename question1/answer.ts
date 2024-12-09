@@ -50,6 +50,12 @@ function getMatches(criteria: (t: Transporter) => boolean): Transporter[] {
 }
 
 // Example usage
-//console.log(getMatches((t) => t.color === "Blue")); // Get Blue transporters
-//console.log(getMatches((t) => t.color === "Red" && "registration" in t)); // Get Red cars
+// Get Blue transporters
+//console.log(getMatches((t) => t.color === "Blue"));
+
+// Get transporters by Color e.g. Red cars 
+//console.log(getMatches((t) => t.color === "Red" && "registration" in t));
+//console.log(getMatches((t) => t.color === "Blue" // (Show All blue transporters)
+
+// Get transporters by Owner e.g. Paul O Regan's car(s)
 console.log(getMatches((t) => t.owner === "Paul O Regan"));

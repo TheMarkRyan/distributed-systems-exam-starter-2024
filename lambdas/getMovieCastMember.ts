@@ -1,5 +1,4 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
-import { MovieCastMemberQueryParams } from "../shared/types";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
@@ -7,12 +6,19 @@ import {
   QueryCommandInput,
 } from "@aws-sdk/lib-dynamodb";
 import Ajv from "ajv";
-import schema from "../shared/types.schema.json";
+
+// Inline query schema definition
+const querySchema = {
+  type: "object",
+  properties: {
+    actorName: { type: "string" },
+    roleName: { type: "string" },
+  },
+  additionalProperties: false,
+};
 
 const ajv = new Ajv();
-const isValidQueryParams = ajv.compile(
-  schema.definitions["MovieCastMemberQueryParams"] || {}
-);
+const isValidQueryParams = ajv.compile(querySchema);
 
 const ddbDocClient = createDocumentClient();
 
@@ -32,6 +38,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         body: JSON.stringify({ Message: "Missing movie Id" }),
       };
     }
+
     const queryParams = event.queryStringParameters;
     if (queryParams && !isValidQueryParams(queryParams)) {
       return {
@@ -41,13 +48,15 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         },
         body: JSON.stringify({
           message: `Incorrect type. Must match Query parameters schema`,
-          schema: schema.definitions["MovieCastMemberQueryParams"],
+          schema: querySchema, // Updated reference to the schema
         }),
       };
     }
+
     let commandInput: QueryCommandInput = {
       TableName: process.env.TABLE_NAME,
     };
+
     if (queryParams) {
       if ("roleName" in queryParams) {
         commandInput = {
